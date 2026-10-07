@@ -1,0 +1,10 @@
+# Claude Code の個人用設定
+.claude/settings.local.json
+
+# Python の一時ファイル
+__pycache__/
+*.pyc
+
+# Windows が自動で作るファイル
+Thumbs.db
+desktop.ini

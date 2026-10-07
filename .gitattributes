@@ -1,0 +1,2 @@
+# 改行コードを LF に統一する（Windows と GitHub で差分が出ないように）
+* text=auto eol=lf
