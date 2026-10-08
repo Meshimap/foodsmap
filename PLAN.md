@@ -29,7 +29,7 @@ SPEC.md を元に依頼者と合意した計画。作業者（Claude）は各ス
 - [x] 0. Git をインストールし、フォルダを OneDrive の外（`C:\Users\02ryo\Myprojects\meshiMap`）へ移動、`git init`・`.gitignore`・最初のコミット
 - [x] 1. 地図だけのページ（Leaflet + OSMタイル、帰属表示、エリア移動ボタン、範囲の点線円）
 - [x] 2. 店舗データ取得スクリプト（Python・標準ライブラリのみ、Overpass API → `data/shops.json`、`data/extra_shops.json` を合体）
-- [ ] 3. 店のアイコン表示＋**クラスタリング**（Leaflet.markercluster。密集したマーカーを数字付きの丸にまとめる）
+- [x] 3. 店のアイコン表示＋**クラスタリング**（Leaflet.markercluster。密集したマーカーを数字付きの丸にまとめる）
 - [ ] 4. **GitHub Pages で一度公開**。以降はスマホで確認しながら進める
 - [ ] 5. 詳細パネル（画面下から出す。店情報・Googleマップリンク・おすすめボタンは見た目だけ）
 - [ ] 6. 絞り込み（ジャンル／おすすめありのみ）・おすすめ順一覧・迷ったらガチャ（仮データで）

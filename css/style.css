@@ -63,3 +63,50 @@ body {
   flex: 1;
   min-height: 0;
 }
+
+.map-message {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: calc(100% - 32px);
+  max-width: 420px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fff3bf;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  font-size: 0.9rem;
+}
+
+/* 店のアイコン（白い丸にジャンルの絵文字） */
+.shop-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.shop-marker-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* まとめ表示の丸をサイトの色に合わせる */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background-color: rgba(232, 89, 12, 0.25);
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgba(232, 89, 12, 0.85);
+  color: #fff;
+  font-weight: bold;
+}

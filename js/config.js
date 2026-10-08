@@ -7,4 +7,7 @@ window.APP_CONFIG = {
   ],
   // エリアボタンで移動したときのズーム
   AREA_ZOOM: 16,
+  // 店舗データ（OSMから取得したもの／運営が手で追加したもの）
+  SHOPS_URL: 'data/shops.json',
+  EXTRA_SHOPS_URL: 'data/extra_shops.json',
 };

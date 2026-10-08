@@ -55,4 +55,83 @@
     });
     nav.appendChild(button);
   });
+
+  // ---- 店のアイコン ----
+
+  const GENRE_ICONS = {
+    'ラーメン': '🍜',
+    'カレー': '🍛',
+    '和食': '🍱',
+    '洋食': '🍝',
+    '中華・アジア': '🥟',
+    'ファストフード': '🍔',
+    'カフェ・甘味': '☕',
+    'パン': '🥐',
+    'その他': '🍽️',
+  };
+
+  function shopIcon(shop) {
+    return L.divIcon({
+      className: 'shop-marker',
+      html: `<span class="shop-marker-emoji">${GENRE_ICONS[shop.genre] || GENRE_ICONS['その他']}</span>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+    });
+  }
+
+  // 密集した店は数字入りの丸にまとめる。拡大すると個々のアイコンに分かれる
+  const clusters = L.markerClusterGroup({
+    maxClusterRadius: 45,
+    showCoverageOnHover: false,
+    spiderfyOnMaxZoom: true,
+    chunkedLoading: true,
+  });
+  map.addLayer(clusters);
+
+  // 仮の表示（ステップ5で画面下から出る詳細パネルに置き換える）。店名は textContent で入れて HTML として解釈させない
+  function popupContent(shop) {
+    const el = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = shop.name;
+    const genre = document.createElement('div');
+    genre.textContent = shop.genre;
+    el.append(name, genre);
+    return el;
+  }
+
+  function showMessage(text) {
+    const el = document.querySelector('.map-message');
+    el.textContent = text;
+    el.hidden = false;
+  }
+
+  async function loadJson(url) {
+    const response = await fetch(url, { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`${url}: ${response.status}`);
+    return response.json();
+  }
+
+  async function loadShops() {
+    const [osm, extra] = await Promise.all([
+      loadJson(config.SHOPS_URL),
+      // 手動追加の店は無くても地図は使えるので、読み込めなくても止めない
+      loadJson(config.EXTRA_SHOPS_URL).catch((e) => {
+        console.warn('extra_shops.json を読み込めませんでした', e);
+        return { shops: [] };
+      }),
+    ]);
+    return [...osm.shops, ...(extra.shops || [])];
+  }
+
+  loadShops()
+    .then((shops) => {
+      clusters.addLayers(shops.map((shop) =>
+        L.marker([shop.lat, shop.lng], { icon: shopIcon(shop), title: shop.name })
+          .bindPopup(() => popupContent(shop))
+      ));
+    })
+    .catch((e) => {
+      console.error(e);
+      showMessage('お店のデータを読み込めませんでした。ページを再読み込みしてください。');
+    });
 })();
