@@ -100,35 +100,124 @@ body {
   font-size: 0.9rem;
 }
 
-/* 店のアイコン（白い丸にジャンルの絵文字） */
-.shop-marker {
+/* ---- 店のピン ---- */
+
+:root {
+  --pin: #f76707;          /* 通常のピン */
+  --pin-selected: #e03131; /* 詳細パネルで表示中のピン */
+  --navy: #364fc7;         /* おすすめ数のバッジ・まとめ表示の丸 */
+}
+
+/* 透明な枠（押せる範囲）の下端中央に、しずく型のピンを置く */
+.shop-pin {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.pin-body {
+  position: relative;
+  display: block;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* Leaflet 標準の「.leaflet-map-pane svg { z-index: 200 }」に負けないよう、クラスを2つ重ねて指定する */
+.shop-pin .pin-shape {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.pin-shape path {
+  fill: var(--pin);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.shop-pin--selected .pin-shape path {
+  fill: var(--pin-selected);
+  stroke-width: 2.5;
+}
+
+/* ジャンルの絵文字は、ピンの丸い部分の白い円の中に */
+.pin-emoji {
+  position: absolute;
+  z-index: 1;
+  top: 12%;
+  left: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--accent);
+  width: 62%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.shop-marker-emoji {
-  font-size: 18px;
+  font-size: 13px;
   line-height: 1;
 }
 
-/* まとめ表示の丸をサイトの色に合わせる */
-.marker-cluster-small,
-.marker-cluster-medium,
-.marker-cluster-large {
-  background-color: rgba(232, 89, 12, 0.25);
+.shop-pin--recommended .pin-emoji { font-size: 16px; }
+.shop-pin--selected .pin-emoji { font-size: 20px; }
+
+/* おすすめ数のバッジ */
+.pin-badge {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -10px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 18px;
+  text-align: center;
 }
 
-.marker-cluster-small div,
-.marker-cluster-medium div,
-.marker-cluster-large div {
-  background-color: rgba(232, 89, 12, 0.85);
+.shop-pin--selected .pin-badge {
+  background: #212529;
+}
+
+/* まとめ表示の丸（紺色に白い数字） */
+.shop-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-cluster span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 82%;
+  height: 82%;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--navy);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
   color: #fff;
+  font-size: 15px;
   font-weight: bold;
+}
+
+/* 詳細パネルを開いている間は、表示中の店以外を半透明にする。
+   ピンの外枠には Leaflet が透明度を直接書き込むので、中身のほうにかける */
+.pin-body,
+.shop-cluster span {
+  transition: opacity 0.2s;
+}
+
+.map.has-selection .shop-pin:not(.is-selected) .pin-body,
+.map.has-selection .shop-cluster span {
+  opacity: 0.3;
 }
 
 /* ---- 店の詳細パネル（スマホでは画面下から出る） ---- */

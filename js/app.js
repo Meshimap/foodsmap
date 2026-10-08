@@ -2,11 +2,11 @@
   'use strict';
 
   const config = window.APP_CONFIG;
-  const { createMap, areaBounds, shopIcon, fetchData, photoImg, GENRE_ICONS } = window.Meshi;
+  const { createMap, areaBounds, shopIcon, clusterIcon, fetchData, photoImg, GENRE_ICONS } = window.Meshi;
 
   // 両エリアがちょうど収まる範囲で地図を開く
   const bounds = areaBounds();
-  const map = createMap('map', { zoomControl: true });
+  const map = createMap('map', { zoomControl: true }, { switcher: config.BASEMAP_SWITCHER });
   map.fitBounds(bounds);
 
   // 読み込み直後は地図の枠の大きさが確定していないことがある（画面回転・PCのウィンドウ変更も同様）。
@@ -42,12 +42,13 @@
     maxClusterRadius: 45,
     showCoverageOnHover: false,
     spiderfyOnMaxZoom: true,
+    iconCreateFunction: clusterIcon,
   });
   map.addLayer(clusters);
 
   // ---- 詳細パネル ----
 
-  const state = { counts: {}, recommended: new Set(), current: null };
+  const state = { counts: {}, recommended: new Set(), current: null, markers: new Map() };
   const sheet = document.getElementById('sheet');
   const sheetBody = sheet.querySelector('.sheet-body');
 
@@ -134,8 +135,26 @@
     sheetBody.replaceChildren(...nodes);
   }
 
-  function openSheet(shop) {
+  // ピンの見た目を今の状態（おすすめ数・表示中か）に合わせる
+  function refreshMarker(shop) {
+    const marker = state.markers.get(shop.id);
+    if (!marker) return;
+    const selected = state.current === shop;
+    marker.setIcon(shopIcon(shop, { count: state.counts[shop.id] || 0, selected }));
+    marker.setZIndexOffset(selected ? 1000 : (state.counts[shop.id] || 0) > 0 ? 100 : 0);
+  }
+
+  // パネルを開いている間は、地図に .has-selection を付けて他のピンを半透明にする（css/style.css）
+  function select(shop) {
+    const previous = state.current;
     state.current = shop;
+    if (previous) refreshMarker(previous);
+    if (shop) refreshMarker(shop);
+    mapEl.classList.toggle('has-selection', Boolean(shop));
+  }
+
+  function openSheet(shop) {
+    select(shop);
     renderSheet(shop);
     sheet.hidden = false;
     sheetBody.scrollTop = 0;
@@ -147,8 +166,9 @@
   }
 
   function closeSheet() {
+    if (sheet.hidden) return;
     sheet.hidden = true;
-    state.current = null;
+    select(null);
   }
 
   sheet.querySelector('.sheet-close').addEventListener('click', closeSheet);
@@ -163,6 +183,7 @@
     if (on) state.recommended.add(shop.id); else state.recommended.delete(shop.id);
     state.counts[shop.id] = Math.max(0, (state.counts[shop.id] || 0) + (on ? 1 : -1));
     renderSheet(shop);
+    refreshMarker(shop);
   }
 
   // ---- 読み込み ----
@@ -178,10 +199,13 @@
     .then(({ shops, counts }) => {
       state.counts = counts;
       showMessage(shops.length ? '' : 'おすすめのお店はまだありません。もうしばらくお待ちください！');
-      clusters.addLayers(shops.map((shop) =>
-        L.marker([shop.lat, shop.lng], { icon: shopIcon(shop), title: shop.name })
-          .on('click', () => openSheet(shop))
-      ));
+      clusters.addLayers(shops.map((shop) => {
+        const marker = L.marker([shop.lat, shop.lng], { icon: shopIcon(shop), title: shop.name, riseOnHover: true })
+          .on('click', () => openSheet(shop));
+        state.markers.set(shop.id, marker);
+        refreshMarker(shop);
+        return marker;
+      }));
     })
     .catch((e) => {
       console.error(e);

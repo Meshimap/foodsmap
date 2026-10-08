@@ -109,28 +109,87 @@
     return img;
   }
 
-  function shopIcon(shop) {
+  // ---- 店のピン ----
+  // 見た目のピンより一回り大きい透明な枠を付け、指で押せる範囲を 44px 以上にする
+  const PIN_SIZES = {
+    normal: { pin: [30, 40], box: [44, 48] },
+    recommended: { pin: [36, 48], box: [48, 56] },
+    selected: { pin: [44, 58], box: [56, 66] },
+  };
+  const PIN_PATH = 'M15 0C6.7 0 0 6.7 0 15c0 10.3 15 25 15 25s15-14.7 15-25C30 6.7 23.3 0 15 0z';
+
+  // count: おすすめ数、selected: 詳細パネルで表示中か
+  function shopIcon(shop, { count = 0, selected = false } = {}) {
+    const kind = selected ? 'selected' : count > 0 ? 'recommended' : 'normal';
+    const { pin, box } = PIN_SIZES[kind];
+    const emoji = GENRE_ICONS[shop.genre] || GENRE_ICONS['その他'];
+    const badge = count > 0 ? `<span class="pin-badge">${count > 99 ? '99+' : count}</span>` : '';
     return L.divIcon({
-      className: 'shop-marker',
-      html: `<span class="shop-marker-emoji">${GENRE_ICONS[shop.genre] || GENRE_ICONS['その他']}</span>`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
+      className: `shop-pin shop-pin--${kind}` + (selected ? ' is-selected' : ''),
+      html: `<span class="pin-body" style="width:${pin[0]}px;height:${pin[1]}px">`
+        + `<svg class="pin-shape" viewBox="-2 -2 34 44" aria-hidden="true"><path d="${PIN_PATH}"/></svg>`
+        + `<span class="pin-emoji">${emoji}</span>${badge}</span>`,
+      iconSize: box,
+      iconAnchor: [box[0] / 2, box[1]], // ピンの先端が店の位置
     });
   }
 
-  // 地図の土台（OSMタイル、帰属表示、対象範囲の点線円）
-  function createMap(elementId, options) {
-    const map = L.map(elementId, { zoomSnap: 0.25, ...options });
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // まとめ表示の丸（紺色に白い数字）。数が多いほど少し大きく
+  function clusterIcon(cluster) {
+    const n = cluster.getChildCount();
+    const size = n < 10 ? 44 : n < 50 ? 50 : 56;
+    return L.divIcon({
+      className: 'shop-cluster',
+      html: `<span>${n}</span>`,
+      iconSize: [size, size],
+    });
+  }
+
+  // ---- 地図の土台（地図の画像、出典表示、対象範囲の点線円） ----
+
+  const BASEMAP_KEY = 'meshi-basemap';
+
+  function savedBasemap() {
+    try { return localStorage.getItem(BASEMAP_KEY); } catch (e) { return null; }
+  }
+
+  function basemapLayer(basemap) {
+    const layer = L.tileLayer(basemap.url.replace('{key}', encodeURIComponent(config.CARTO_KEY)), {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+      maxNativeZoom: basemap.maxNativeZoom,
+      attribution: basemap.attribution,
+    });
+    // 色の調整は地図の画像だけにかける（ピンやパネルには影響しない）
+    layer.on('add', () => { layer.getContainer().style.filter = basemap.filter || ''; });
+    return layer;
+  }
+
+  // switcher: true なら右上に地図の切り替えボタンを出す（比較用）
+  function createMap(elementId, options, { switcher = false } = {}) {
+    const map = L.map(elementId, { zoomSnap: 0.25, ...options });
+    const usable = config.BASEMAPS.filter((b) => !b.needsCartoKey || config.CARTO_KEY);
+    const layers = Object.fromEntries(usable.map((b) => [b.id, basemapLayer(b)]));
+    const chosen = (switcher && layers[savedBasemap()]) ? savedBasemap() : config.BASEMAP;
+    (layers[chosen] || Object.values(layers)[0]).addTo(map);
+
+    if (switcher) {
+      L.control.layers(Object.fromEntries(usable.map((b) => [b.name, layers[b.id]])), null, { collapsed: true }).addTo(map);
+      map.on('baselayerchange', (event) => {
+        const id = Object.keys(layers).find((key) => layers[key] === event.layer);
+        try { localStorage.setItem(BASEMAP_KEY, id); } catch (e) { /* 保存できなくても切り替えは効く */ }
+      });
+    }
+
+    // 店の位置などのデータは OpenStreetMap 由来なので、どの地図を使っていても出典を出す
+    map.attributionControl.addAttribution('店舗データ &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors');
+
     config.AREAS.forEach((area) => {
       L.circle([area.lat, area.lng], {
         radius: area.radius,
-        color: '#e8590c',
+        color: '#364fc7',
+        opacity: 0.55,
         weight: 2,
-        dashArray: '4 6',
+        dashArray: '6 6',
         fill: false,
         interactive: false,
       }).addTo(map);
@@ -149,6 +208,7 @@
     post,
     photoImg,
     shopIcon,
+    clusterIcon,
     createMap,
     areaBounds,
   };

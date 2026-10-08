@@ -11,4 +11,57 @@ window.APP_CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbxwNFlRV_RkSCrXbpieCKHsL3SlgbE1VFqPoxW_u880qCRNtw_zbejDTP-9NbU2iAJ7uA/exec',
   // 管理ページで店名検索に使う候補リスト（OSMから取得したもの）
   CANDIDATES_URL: 'data/shops.json',
+
+  // ---- 地図の画像（ベースマップ） ----
+  // 使う地図。BASEMAPS の id のどれか
+  BASEMAP: 'gsi_pale',
+  // true の間は、トップページの右上に地図の切り替えボタンを出す（比較用。地図が決まったら false にする）
+  BASEMAP_SWITCHER: true,
+  // CARTO の API キー（無料・メール登録で発行）。空のあいだは CARTO の地図は選べない
+  CARTO_KEY: '',
+  // filter は地図の画像だけにかける色の調整（彩度・明るさを下げてピンを目立たせる）
+  BASEMAPS: [
+    {
+      id: 'gsi_pale',
+      name: '国土地理院 淡色地図',
+      url: 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',
+      maxNativeZoom: 18,
+      attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>',
+      filter: 'brightness(0.93) contrast(1.05)',
+    },
+    {
+      id: 'gsi_std',
+      name: '国土地理院 標準地図',
+      url: 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',
+      maxNativeZoom: 18,
+      attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>',
+      filter: 'saturate(0.55) brightness(0.95)',
+    },
+    {
+      id: 'carto_voyager',
+      name: 'CARTO Voyager',
+      url: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key={key}',
+      needsCartoKey: true,
+      maxNativeZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+      filter: 'saturate(0.7) brightness(0.95)',
+    },
+    {
+      id: 'carto_positron',
+      name: 'CARTO Positron',
+      url: 'https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key={key}',
+      needsCartoKey: true,
+      maxNativeZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+      filter: 'brightness(0.92) contrast(1.05)',
+    },
+    {
+      id: 'osm',
+      name: 'OpenStreetMap（今までの地図）',
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      maxNativeZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+      filter: 'saturate(0.5) brightness(0.93)',
+    },
+  ],
 };
