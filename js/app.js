@@ -112,15 +112,7 @@
   }
 
   async function loadShops() {
-    const [osm, extra] = await Promise.all([
-      loadJson(config.SHOPS_URL),
-      // 手動追加の店は無くても地図は使えるので、読み込めなくても止めない
-      loadJson(config.EXTRA_SHOPS_URL).catch((e) => {
-        console.warn('extra_shops.json を読み込めませんでした', e);
-        return { shops: [] };
-      }),
-    ]);
-    return [...osm.shops, ...(extra.shops || [])];
+    return (await loadJson(config.SHOPS_URL)).shops;
   }
 
   loadShops()
