@@ -1,5 +1,5 @@
 {
-  "_説明": "地図に載せない店のルール。scripts/fetch_shops.py が店舗データを作るときに使う。変更したら python scripts/fetch_shops.py を実行し直すと反映される。chains は全国チェーンの名前（店名がこの名前を含むか、OSMのブランド名が一致したら除外）。name_keywords は店名にこの言葉を含む店を除外。tags はOSMのタグが一致する店を除外。ids はOSMのID（例 node/123）で1店ずつ除外。",
+  "_説明": "地図に載せない店のルール。scripts/fetch_shops.py が店舗データを作るときに使う。変更したら python scripts/fetch_shops.py を実行し直すと反映される。chains は全国チェーンの名前（店名がこの名前を含むか、OSMのブランド名が一致したら除外）。name_keywords は店名にこの言葉を含む店を除外。tags はOSMのタグが一致する店を除外。names は店名が完全に一致する店を除外（コンセプトカフェなど）。ids はOSMのID（例 node/123）で1店ずつ除外。",
   "chains": [
     "スターバックス", "Starbucks", "ドトール", "タリーズ", "エクセルシオール", "プロント", "サンマルクカフェ",
     "上島珈琲", "コメダ", "星乃珈琲", "珈琲館", "サーティワン", "バスキン", "ミスタードーナツ", "Chatime", "ゴンチャ",
@@ -20,5 +20,11 @@
     "maid": ["yes"],
     "theme": ["maid", "miko"]
   },
+  "names": [
+    "Melty Charm", "Like a Doll", "Misty Veil", "エンジェルドロップス", "マジカルツインテール", "マジカルロリポップ",
+    "リリアンキュキュ", "男装カフェ", "GIRL'S CAFE☆TOKYO", "LILIAN PICOLE", "Saint Universe", "Schwartz Chevalier",
+    "スターリーフォレスト", "Maison de Eterna", "Maison de ROZE", "milk Planet", "mizuiro days", "もののぷ",
+    "パレスゲート", "The Seven Dreadly Sins"
+  ],
   "ids": []
 }

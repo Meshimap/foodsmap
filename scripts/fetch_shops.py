@@ -151,6 +151,7 @@ def load_exclude():
         "chains": rules.get("chains", []),
         "name_keywords": rules.get("name_keywords", []),
         "tags": rules.get("tags", {}),
+        "names": set(rules.get("names", [])),
         "ids": set(rules.get("ids", [])),
     }
 
@@ -164,6 +165,8 @@ def exclude_reason(element, rules):
         if tags.get(key) in values:
             return f"タグ {key}={tags[key]}"
     names = [tags.get(k, "") for k in ("name", "name:ja", "name:en")]
+    if rules["names"] & set(names):
+        return "店名指定"
     brands = {tags.get(k) for k in ("brand", "brand:ja", "brand:en")} - {None}
     for chain in rules["chains"]:
         if chain in brands or any(chain in n for n in names):
