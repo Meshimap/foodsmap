@@ -100,6 +100,26 @@ body {
   font-size: 0.9rem;
 }
 
+/* ---- 日本大学経済学部のラベル ---- */
+
+.venue-label {
+  pointer-events: none;
+}
+
+.venue-label span {
+  display: inline-block;
+  transform: translate(-50%, -120%);
+  padding: 3px 10px;
+  border: 2px solid #e03131;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  color: #c92a2a;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
 /* ---- 店のピン ---- */
 
 :root {

@@ -35,6 +35,26 @@
     nav.appendChild(button);
   });
 
+  // ---- 日本大学経済学部の建物（赤枠で目立たせる） ----
+
+  fetch(config.VENUE_URL)
+    .then((response) => response.json())
+    .then((venue) => {
+      // クリックは地図に通す（パネルを閉じる操作を邪魔しない）
+      const buildings = L.geoJSON(venue, {
+        interactive: false,
+        style: { color: '#e03131', weight: 3, fillColor: '#e03131', fillOpacity: 0.12 },
+      }).addTo(map);
+      // ラベルは建物全体の北側の真ん中あたりに置く（ピンと重なりにくい）
+      const area = buildings.getBounds();
+      L.marker([area.getNorth(), area.getCenter().lng], {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({ className: 'venue-label', html: `<span>${config.VENUE_LABEL}</span>`, iconSize: null }),
+      }).addTo(map);
+    })
+    .catch((e) => console.warn('建物の形を読み込めませんでした', e));
+
   // ---- 店のアイコン ----
 
   // 密集した店は数字入りの丸にまとめる。拡大すると個々のアイコンに分かれる

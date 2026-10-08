@@ -11,12 +11,16 @@ window.APP_CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbxwNFlRV_RkSCrXbpieCKHsL3SlgbE1VFqPoxW_u880qCRNtw_zbejDTP-9NbU2iAJ7uA/exec',
   // 管理ページで店名検索に使う候補リスト（OSMから取得したもの）
   CANDIDATES_URL: 'data/shops.json',
+  // 地図で赤枠で目立たせる建物（日本大学経済学部。scripts/fetch_venue.py で作成）と、そこに付けるラベル
+  VENUE_URL: 'data/venue.json',
+  VENUE_LABEL: '🏫 日本大学経済学部',
 
   // ---- 地図の画像（ベースマップ） ----
   // 使う地図。BASEMAPS の id のどれか
-  BASEMAP: 'gsi_pale',
-  // true の間は、トップページの右上に地図の切り替えボタンを出す（比較用。地図が決まったら false にする）
-  BASEMAP_SWITCHER: true,
+  // 2026-10 にスマホで見比べて、彩度を下げた OpenStreetMap に決定
+  BASEMAP: 'osm',
+  // true にすると、トップページの右上に地図の切り替えボタンを出す（見比べるとき用）
+  BASEMAP_SWITCHER: false,
   // CARTO の API キー（無料・メール登録で発行）。空のあいだは CARTO の地図は選べない
   CARTO_KEY: 'cb1_4eas_1_38f48ab6dd6dbace26c3766c',
   // filter は地図の画像だけにかける色の調整（彩度・明るさを下げてピンを目立たせる）
