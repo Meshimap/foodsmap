@@ -38,6 +38,26 @@ body {
   line-height: 1.3;
 }
 
+.header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header-link {
+  flex: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.header-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
 .area-buttons {
   display: flex;
   gap: 8px;

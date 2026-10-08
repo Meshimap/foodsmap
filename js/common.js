@@ -16,26 +16,44 @@
     'その他': '🍽️',
   };
 
-  // GAS から表示中の店とおすすめ数を取得する
-  async function fetchData() {
-    const response = await fetch(config.GAS_URL);
-    if (!response.ok) throw new Error(`GAS: ${response.status}`);
-    const data = await response.json();
+  // GAS との通信。電波が悪いと応答が返らないまま待ち続けることがあるので、timeout ミリ秒で打ち切る
+  async function request(options, timeout) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    let response;
+    try {
+      response = await fetch(config.GAS_URL, { ...options, signal: controller.signal });
+    } catch (e) {
+      throw new Error(e.name === 'AbortError'
+        ? '通信に時間がかかりすぎたため中断しました。電波の良い場所でもう一度お試しください。'
+        : '通信できませんでした。インターネットにつながっているか確認して、もう一度お試しください。');
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!response.ok) throw new Error(`通信に失敗しました（${response.status}）。もう一度お試しください。`);
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      throw new Error('サーバーから正しい応答がありませんでした。もう一度お試しください。');
+    }
     if (!data.ok) throw new Error(data.error);
     return data;
   }
 
-  // GAS に操作を送る。text/plain で送るのは、ブラウザの事前確認通信（GASが受け付けない）を避けるため
-  async function post(body) {
-    const response = await fetch(config.GAS_URL, {
+  // GAS から表示中の店とおすすめ数を取得する
+  function fetchData() {
+    return request({}, 30000);
+  }
+
+  // GAS に操作を送る。text/plain で送るのは、ブラウザの事前確認通信（GASが受け付けない）を避けるため。
+  // 写真つきは送る量が多いので長めに待つ
+  function post(body) {
+    return request({
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(body),
-    });
-    if (!response.ok) throw new Error(`通信に失敗しました（${response.status}）`);
-    const data = await response.json();
-    if (!data.ok) throw new Error(data.error);
-    return data;
+    }, body.photo || (body.changes && body.changes.photo) ? 90000 : 30000);
   }
 
   // Google ドライブに保存した写真の表示用URL（公式に保証された形式ではないので、表示できないときは代わりのURLを試す）
