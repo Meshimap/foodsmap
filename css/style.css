@@ -79,9 +79,183 @@ body {
 
 .area-button:active { opacity: 0.8; }
 
-.map {
+/* ヘッダーの下の残りすべてを、地図（または一覧）に使う */
+.content {
+  position: relative;
   flex: 1;
   min-height: 0;
+}
+
+.map {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- ジャンルで絞り込むボタン（横にスクロール） ---- */
+
+.genre-chips {
+  display: flex;
+  gap: 6px;
+  margin: 8px -12px -2px;
+  padding: 0 12px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.genre-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.genre-chips[hidden] {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: bold;
+}
+
+/* ---- 一覧（おすすめ数の多い順） ---- */
+
+.list-view {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 12px max(12px, env(safe-area-inset-right)) 96px max(12px, env(safe-area-inset-left));
+  background: #f8f9fa;
+}
+
+.list-view[hidden] {
+  display: none;
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rank-item > img,
+.rank-icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.rank-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff4e6;
+  font-size: 28px;
+}
+
+.rank-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rank-comment {
+  overflow: hidden;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rank-count {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.rank-count.is-zero {
+  background: none;
+  color: #adb5bd;
+}
+
+.rank-empty {
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ---- 画面下の丸いボタン（一覧の切り替え・ガチャ） ---- */
+
+.fab-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  z-index: 1100;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  pointer-events: none; /* ボタンの間の地図は触れるように */
+}
+
+.fab {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: bold;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.fab-primary {
+  background: var(--accent);
+  color: var(--accent-text);
 }
 
 .map-message {

@@ -19,11 +19,25 @@
     <nav class="area-buttons" aria-label="エリア移動">
       <!-- js/app.js が config.js の AREAS からボタンを作る -->
     </nav>
+    <!-- ジャンルで絞り込むボタン（横にスクロール）。js/app.js が作る -->
+    <div class="genre-chips" role="group" aria-label="ジャンルで絞り込み"></div>
   </header>
 
-  <main id="map" class="map" aria-label="飲食店の地図">
+  <div class="content">
+    <main id="map" class="map" aria-label="飲食店の地図"></main>
+
+    <!-- おすすめ数の多い順の一覧（地図と切り替え） -->
+    <section id="list-view" class="list-view" aria-label="お店の一覧" hidden>
+      <ol class="rank-list"></ol>
+    </section>
+
     <p class="map-message" hidden></p>
-  </main>
+
+    <div class="fab-row">
+      <button type="button" class="fab" id="toggle-view">☰ 一覧で見る</button>
+      <button type="button" class="fab fab-primary" id="gacha">🎲 迷ったらガチャ</button>
+    </div>
+  </div>
 
   <!-- 店の詳細パネル（スマホでは画面下から出る）。中身は js/app.js が作る -->
   <aside class="sheet" id="sheet" aria-label="お店の詳細" hidden>

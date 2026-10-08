@@ -106,6 +106,7 @@
     pending: new Set(), // 送信中の店の ID
     current: null,
     markers: new Map(),
+    shops: [], // 掲載中の店（GAS から読み込んだもの）
   };
   const sheet = document.getElementById('sheet');
   const sheetBody = sheet.querySelector('.sheet-body');
@@ -244,6 +245,7 @@
     state.counts[shop.id] = Math.max(0, count);
     refreshMarker(shop);
     if (state.current === shop) renderSheet(shop);
+    if (!listView.hidden) renderList();
   }
 
   // 押した瞬間に数を増やして（減らして）表示し、裏で GAS に送る。失敗したら元に戻す
@@ -282,10 +284,132 @@
           if (marker) refreshMarker(marker.shop);
         });
         if (state.current && !state.pending.has(state.current.id)) renderSheet(state.current);
+        if (!listView.hidden) renderList();
       })
       .catch((e) => console.warn('おすすめ数を更新できませんでした', e))
       .finally(() => { refreshing = null; });
   }
+
+  // ---- 絞り込み（ジャンル） ----
+
+  const chips = document.querySelector('.genre-chips');
+  const selectedGenres = new Set(); // 空なら全部表示
+
+  function matches(shop) {
+    return selectedGenres.size === 0 || selectedGenres.has(shop.genre);
+  }
+
+  function filteredShops() {
+    return state.shops.filter(matches);
+  }
+
+  function chip(label, active, onClick) {
+    const button = el('button', 'chip' + (active ? ' is-active' : ''), label);
+    button.type = 'button';
+    button.setAttribute('aria-pressed', String(active));
+    button.addEventListener('click', onClick);
+    return button;
+  }
+
+  // 掲載店があるジャンルだけ、件数つきで並べる
+  function renderChips() {
+    const counts = {};
+    state.shops.forEach((shop) => { counts[shop.genre] = (counts[shop.genre] || 0) + 1; });
+    const genres = Object.keys(GENRE_ICONS).filter((g) => counts[g]);
+    chips.hidden = genres.length < 2; // ジャンルが1種類しかなければ絞り込む意味がない
+    chips.replaceChildren(
+      chip('すべて', selectedGenres.size === 0, () => {
+        selectedGenres.clear();
+        applyFilter();
+      }),
+      ...genres.map((g) => chip(`${GENRE_ICONS[g]} ${g} ${counts[g]}`, selectedGenres.has(g), () => {
+        if (selectedGenres.has(g)) selectedGenres.delete(g); else selectedGenres.add(g);
+        applyFilter();
+      })),
+    );
+  }
+
+  function applyFilter() {
+    renderChips();
+    const shops = filteredShops();
+    clusters.clearLayers();
+    clusters.addLayers(shops.map((shop) => state.markers.get(shop.id)));
+    if (state.current && !matches(state.current)) closeSheet();
+    if (!listView.hidden) renderList();
+  }
+
+  // ---- 一覧（おすすめ数の多い順） ----
+
+  const listView = document.getElementById('list-view');
+  const rankList = listView.querySelector('.rank-list');
+  const toggleButton = document.getElementById('toggle-view');
+
+  function renderList() {
+    const shops = filteredShops().sort((a, b) =>
+      (state.counts[b.id] || 0) - (state.counts[a.id] || 0) || a.name.localeCompare(b.name, 'ja'));
+    if (!shops.length) {
+      rankList.replaceChildren(el('li', 'muted rank-empty', '条件に合うお店がありません'));
+      return;
+    }
+    rankList.replaceChildren(...shops.map((shop) => {
+      const count = state.counts[shop.id] || 0;
+      const button = el('button', 'rank-item');
+      button.type = 'button';
+      if (shop.photo) {
+        button.appendChild(photoImg(shop.photo, 160, '', true));
+      } else {
+        button.appendChild(el('span', 'rank-icon', GENRE_ICONS[shop.genre] || GENRE_ICONS['その他']));
+      }
+      const body = el('span', 'rank-body');
+      body.append(el('strong', null, shop.name), el('span', 'muted', shop.genre));
+      if (shop.comment) body.appendChild(el('span', 'rank-comment', shop.comment));
+      button.appendChild(body);
+      button.appendChild(el('span', 'rank-count' + (count ? '' : ' is-zero'), count ? `👍 ${count}` : '—'));
+      button.addEventListener('click', () => showOnMap(shop));
+      const li = el('li');
+      li.appendChild(button);
+      return li;
+    }));
+  }
+
+  function setView(view) {
+    const list = view === 'list';
+    listView.hidden = !list;
+    toggleButton.textContent = list ? '🗺️ 地図で見る' : '☰ 一覧で見る';
+    if (list) {
+      closeSheet();
+      renderList();
+      listView.scrollTop = 0;
+    } else {
+      map.invalidateSize();
+    }
+  }
+
+  toggleButton.addEventListener('click', () => setView(listView.hidden ? 'list' : 'map'));
+
+  // 地図に切り替えて、その店まで移動してから詳細パネルを開く（まとめ表示の中なら、ばらけるまで拡大する）
+  function showOnMap(shop) {
+    setView('map');
+    userInteracted = true;
+    const marker = state.markers.get(shop.id);
+    map.setView([shop.lat, shop.lng], Math.max(map.getZoom(), 17), { animate: false });
+    clusters.zoomToShowLayer(marker, () => openSheet(shop));
+  }
+
+  // ---- 迷ったらガチャ ----
+
+  document.getElementById('gacha').addEventListener('click', () => {
+    let shops = filteredShops();
+    if (!shops.length) {
+      toast(state.shops.length ? '条件に合うお店がありません' : 'まだお店がありません');
+      return;
+    }
+    // 今見ている店以外から選ぶ（候補が2店以上あるとき）
+    if (shops.length > 1 && state.current) shops = shops.filter((s) => s !== state.current);
+    const shop = shops[Math.floor(Math.random() * shops.length)];
+    toast(`🎲 「${shop.name}」はいかが？`);
+    showOnMap(shop);
+  });
 
   // ---- 読み込み ----
 
@@ -299,15 +423,16 @@
   fetchData()
     .then(({ shops, counts }) => {
       state.counts = counts;
+      state.shops = shops;
       showMessage(shops.length ? '' : 'おすすめのお店はまだありません。もうしばらくお待ちください！');
-      clusters.addLayers(shops.map((shop) => {
+      shops.forEach((shop) => {
         const marker = L.marker([shop.lat, shop.lng], { icon: shopIcon(shop), title: shop.name, riseOnHover: true })
           .on('click', () => openSheet(shop));
         marker.shop = shop;
         state.markers.set(shop.id, marker);
         refreshMarker(shop);
-        return marker;
-      }));
+      });
+      applyFilter();
     })
     .catch((e) => {
       console.error(e);
