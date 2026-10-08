@@ -175,6 +175,7 @@ def write_output(shops):
         '"attribution":"© OpenStreetMap contributors (ODbL)",\n'
         '"shops":[\n' + ",\n".join(lines) + "\n]\n}\n",
         encoding="utf-8",
+        newline="\n",
     )
 
 
