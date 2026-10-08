@@ -169,19 +169,28 @@
     const map = L.map(elementId, { zoomSnap: 0.25, ...options });
     const usable = config.BASEMAPS.filter((b) => !b.needsCartoKey || config.CARTO_KEY);
     const layers = Object.fromEntries(usable.map((b) => [b.id, basemapLayer(b)]));
+    // 店の位置などのデータは OpenStreetMap 由来なので出典を出す。
+    // ただし地図の画像の出典にすでに OpenStreetMap が入っている地図では、二重にならないよう省く
+    const dataAttribution = '店舗データ &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
+    function useBasemap(id) {
+      const basemap = usable.find((b) => b.id === id);
+      map.attributionControl.removeAttribution(dataAttribution);
+      if (!basemap.attribution.includes('openstreetmap.org')) map.attributionControl.addAttribution(dataAttribution);
+    }
+
     const chosen = (switcher && layers[savedBasemap()]) ? savedBasemap() : config.BASEMAP;
-    (layers[chosen] || Object.values(layers)[0]).addTo(map);
+    const first = layers[chosen] ? chosen : usable[0].id;
+    layers[first].addTo(map);
+    useBasemap(first);
 
     if (switcher) {
       L.control.layers(Object.fromEntries(usable.map((b) => [b.name, layers[b.id]])), null, { collapsed: true }).addTo(map);
       map.on('baselayerchange', (event) => {
         const id = Object.keys(layers).find((key) => layers[key] === event.layer);
+        useBasemap(id);
         try { localStorage.setItem(BASEMAP_KEY, id); } catch (e) { /* 保存できなくても切り替えは効く */ }
       });
     }
-
-    // 店の位置などのデータは OpenStreetMap 由来なので、どの地図を使っていても出典を出す
-    map.attributionControl.addAttribution('店舗データ &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors');
 
     config.AREAS.forEach((area) => {
       L.circle([area.lat, area.lng], {
