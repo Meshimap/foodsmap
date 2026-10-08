@@ -72,11 +72,15 @@
     showError(form, '');
     const password = $('#password').value;
     try {
-      await withBusy(form.querySelector('button'), '確認中…', () => post({ action: 'adminLogin', password }));
+      // 一覧の取得でパスワードも確認される（通信を1回で済ませる）
+      const data = await withBusy(form.querySelector('button'), '確認中…',
+        () => post({ action: 'adminList', password }));
       state.password = password;
       storage('set', password);
       $('#password').value = '';
-      await openList();
+      show('view-list');
+      state.shops = data.shops;
+      renderList();
     } catch (e) {
       showError(form, e.message);
     }
@@ -100,7 +104,7 @@
       renderList();
     } catch (e) {
       $('#list-summary').textContent = `読み込めませんでした：${e.message}`;
-      if (/パスワード/.test(e.message)) {
+      if (e.fromServer && /パスワード/.test(e.message)) {
         storage('remove');
         show('view-login');
       }
