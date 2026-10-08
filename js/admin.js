@@ -120,7 +120,7 @@
       li.className = 'shop-item' + (shop.visible ? '' : ' is-hidden');
 
       if (shop.photo) {
-        li.appendChild(photoImg(shop.photo, 160, ''));
+        li.appendChild(photoImg(shop.photo, 160, '', true));
       } else {
         const icon = document.createElement('span');
         icon.className = 'shop-item-icon';
@@ -423,7 +423,8 @@
       toast(f.mode === 'edit' ? '保存しました' : `「${name}」を追加しました`);
       await openList();
     } catch (e) {
-      showError(form, e.message);
+      // 通信の失敗は「サーバーには届いて保存されたが、返事だけ届かなかった」こともある
+      showError(form, e.fromServer ? e.message : `${e.message}（保存できている場合もあるので、一覧に戻って確認してください）`);
     }
   });
 
