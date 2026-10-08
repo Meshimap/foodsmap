@@ -7,6 +7,8 @@ SPEC.md を元に依頼者と合意した計画。作業者（Claude）は各ス
 
 公開URL：https://meshimap.github.io/foodsmap/ （リポジトリ https://github.com/Meshimap/foodsmap 、main ブランチの root を公開）
 
+GAS ウェブアプリ：https://script.google.com/macros/s/AKfycbxwNFlRV_RkSCrXbpieCKHsL3SlgbE1VFqPoxW_u880qCRNtw_zbejDTP-9NbU2iAJ7uA/exec （スプレッドシート「飯屋マップ データ」に紐づく。コード更新時は「デプロイを管理 → 新バージョン」でURLを変えない）
+
 ## 決定事項
 
 | 項目 | 決定 |
@@ -37,7 +39,7 @@ SPEC.md を元に依頼者と合意した計画。作業者（Claude）は各ス
 - [x] 2. 店舗データ取得スクリプト（Python・標準ライブラリのみ、Overpass API → `data/shops.json`）
 - [x] 3. 店のアイコン表示＋クラスタリング（Leaflet.markercluster）
 - [x] 4. GitHub Pages で公開。以降はスマホで確認しながら進める
-- [ ] 5. GAS＋スプレッドシートの準備（`gas/Code.gs`）。依頼者がシート作成・貼り付け・初期設定・デプロイ
+- [x] 5. GAS＋スプレッドシートの準備（`gas/Code.gs`）。依頼者がシート作成・貼り付け・初期設定・デプロイ
 - [ ] 6. サイトが GAS から掲載店を読み込む形に変更（最初は0件）
 - [ ] 7. 管理ページ（パスワード → 検索 → 選ぶ／地図タップで手入力 → 一言・写真 → 追加。非表示・修正）
 - [ ] 8. 詳細パネル（写真・一言・店情報・Googleマップで開く・おすすめボタン）
