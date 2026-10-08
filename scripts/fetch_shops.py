@@ -5,6 +5,7 @@
 
 - 対象エリア（駅の位置と半径）は js/config.js の AREAS から読み取る
 - Overpass API（OSMデータの無料の検索窓口）を1回だけ呼ぶ。登録・費用は不要
+- 載せない店（全国チェーン・メイドカフェなど）のルールは data/exclude.json に書く
 - 運営が手で追加する店は data/extra_shops.json に書く（このスクリプトは触らない）
 """
 
@@ -21,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_JS = ROOT / "js" / "config.js"
 OUTPUT = ROOT / "data" / "shops.json"
+EXCLUDE_JSON = ROOT / "data" / "exclude.json"
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 USER_AGENT = "meshiMap-fetch/1.0 (school festival restaurant map)"
@@ -143,6 +145,35 @@ def address_of(tags):
     return area + number if area else None
 
 
+def load_exclude():
+    rules = json.loads(EXCLUDE_JSON.read_text(encoding="utf-8"))
+    return {
+        "chains": rules.get("chains", []),
+        "name_keywords": rules.get("name_keywords", []),
+        "tags": rules.get("tags", {}),
+        "ids": set(rules.get("ids", [])),
+    }
+
+
+def exclude_reason(element, rules):
+    """除外する店なら理由を、載せる店なら None を返す"""
+    tags = element.get("tags", {})
+    if f"{element['type']}/{element['id']}" in rules["ids"]:
+        return "ID指定"
+    for key, values in rules["tags"].items():
+        if tags.get(key) in values:
+            return f"タグ {key}={tags[key]}"
+    names = [tags.get(k, "") for k in ("name", "name:ja", "name:en")]
+    brands = {tags.get(k) for k in ("brand", "brand:ja", "brand:en")} - {None}
+    for chain in rules["chains"]:
+        if chain in brands or any(chain in n for n in names):
+            return f"チェーン「{chain}」"
+    for word in rules["name_keywords"]:
+        if any(word in n for n in names):
+            return f"店名に「{word}」"
+    return None
+
+
 def to_shop(element):
     tags = element.get("tags", {})
     name = tags.get("name:ja") or tags.get("name")
@@ -182,19 +213,27 @@ def write_output(shops):
 def main():
     areas = read_areas()
     print("対象エリア:", "、".join(f"{a['name']}（半径{a['radius']}m）" for a in areas))
+    rules = load_exclude()
     data = fetch(build_query(areas))
 
-    shops, unnamed = [], 0
+    shops, unnamed, excluded = [], 0, []
     for element in data["elements"]:
         shop = to_shop(element)
-        if shop:
-            shops.append(shop)
-        else:
+        if not shop:
             unnamed += 1
+            continue
+        reason = exclude_reason(element, rules)
+        if reason:
+            excluded.append((shop["name"], reason))
+        else:
+            shops.append(shop)
     shops.sort(key=lambda s: s["id"])
     write_output(shops)
 
-    print(f"保存しました: {OUTPUT.relative_to(ROOT)}（{len(shops)}件。名前の無い {unnamed}件は除外）")
+    print(f"除外した店（{len(excluded)}件）:")
+    for name, reason in sorted(excluded, key=lambda x: x[1]):
+        print(f"  {name} … {reason}")
+    print(f"保存しました: {OUTPUT.relative_to(ROOT)}（{len(shops)}件。名前の無い {unnamed}件も除外）")
     counts = {}
     for s in shops:
         counts[s["genre"]] = counts.get(s["genre"], 0) + 1
