@@ -7,6 +7,8 @@ window.APP_CONFIG = {
   ],
   // エリアボタンで移動したときのズーム
   AREA_ZOOM: 16,
-  // 店舗データ（OSMから取得したもの）
-  SHOPS_URL: 'data/shops.json',
+  // 掲載店・おすすめを保存している Google Apps Script（ウェブアプリ）のURL
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxwNFlRV_RkSCrXbpieCKHsL3SlgbE1VFqPoxW_u880qCRNtw_zbejDTP-9NbU2iAJ7uA/exec',
+  // 管理ページで店名検索に使う候補リスト（OSMから取得したもの）
+  CANDIDATES_URL: 'data/shops.json',
 };

@@ -2,15 +2,12 @@
   'use strict';
 
   const config = window.APP_CONFIG;
+  const { createMap, areaBounds, shopIcon, fetchData, photoImg } = window.Meshi;
 
   // 両エリアがちょうど収まる範囲で地図を開く
-  const areaBounds = L.latLngBounds(
-    config.AREAS.map((a) => L.latLng(a.lat, a.lng).toBounds(a.radius * 2))
-  );
-
-  // zoomSnap を細かくして、スマホ幅でも両エリアがぎりぎり大きく収まるようにする
-  const map = L.map('map', { zoomControl: true, zoomSnap: 0.25 });
-  map.fitBounds(areaBounds);
+  const bounds = areaBounds();
+  const map = createMap('map', { zoomControl: true });
+  map.fitBounds(bounds);
 
   // 読み込み直後は地図の枠の大きさが確定していないことがある（画面回転・PCのウィンドウ変更も同様）。
   // 利用者がまだ地図を触っていなければ、枠の大きさが変わるたびに両エリアが収まるよう合わせ直す
@@ -21,26 +18,8 @@
   });
   new ResizeObserver(() => {
     map.invalidateSize();
-    if (!userInteracted) map.fitBounds(areaBounds);
+    if (!userInteracted) map.fitBounds(bounds);
   }).observe(mapEl);
-
-  // OSMタイル。帰属表示は利用規約上必須
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
-
-  // 対象範囲の目安を薄い円で表示
-  config.AREAS.forEach((area) => {
-    L.circle([area.lat, area.lng], {
-      radius: area.radius,
-      color: '#e8590c',
-      weight: 2,
-      dashArray: '4 6',
-      fill: false,
-      interactive: false,
-    }).addTo(map);
-  });
 
   // エリア移動ボタン
   const nav = document.querySelector('.area-buttons');
@@ -58,68 +37,45 @@
 
   // ---- 店のアイコン ----
 
-  const GENRE_ICONS = {
-    'ラーメン': '🍜',
-    'カレー': '🍛',
-    '和食': '🍱',
-    '洋食': '🍝',
-    '中華・アジア': '🥟',
-    'ファストフード': '🍔',
-    'カフェ・甘味': '☕',
-    'パン': '🥐',
-    'その他': '🍽️',
-  };
-
-  function shopIcon(shop) {
-    return L.divIcon({
-      className: 'shop-marker',
-      html: `<span class="shop-marker-emoji">${GENRE_ICONS[shop.genre] || GENRE_ICONS['その他']}</span>`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-    });
-  }
-
   // 密集した店は数字入りの丸にまとめる。拡大すると個々のアイコンに分かれる
   const clusters = L.markerClusterGroup({
     maxClusterRadius: 45,
     showCoverageOnHover: false,
     spiderfyOnMaxZoom: true,
-    chunkedLoading: true,
   });
   map.addLayer(clusters);
 
-  // 仮の表示（ステップ5で画面下から出る詳細パネルに置き換える）。店名は textContent で入れて HTML として解釈させない
+  // 仮の表示（ステップ8で画面下から出る詳細パネルに置き換える）。文字は textContent で入れて HTML として解釈させない
   function popupContent(shop) {
     const el = document.createElement('div');
+    el.className = 'shop-popup';
     const name = document.createElement('strong');
     name.textContent = shop.name;
     const genre = document.createElement('div');
     genre.textContent = shop.genre;
     el.append(name, genre);
+    if (shop.photo) el.appendChild(photoImg(shop.photo, 400, shop.name));
+    if (shop.comment) {
+      const comment = document.createElement('p');
+      comment.textContent = shop.comment;
+      el.appendChild(comment);
+    }
     return el;
   }
 
   function showMessage(text) {
     const el = document.querySelector('.map-message');
     el.textContent = text;
-    el.hidden = false;
+    el.hidden = !text;
   }
 
-  async function loadJson(url) {
-    const response = await fetch(url, { cache: 'no-cache' });
-    if (!response.ok) throw new Error(`${url}: ${response.status}`);
-    return response.json();
-  }
-
-  async function loadShops() {
-    return (await loadJson(config.SHOPS_URL)).shops;
-  }
-
-  loadShops()
-    .then((shops) => {
+  showMessage('お店を読み込んでいます…');
+  fetchData()
+    .then(({ shops }) => {
+      showMessage(shops.length ? '' : 'おすすめのお店はまだありません。もうしばらくお待ちください！');
       clusters.addLayers(shops.map((shop) =>
         L.marker([shop.lat, shop.lng], { icon: shopIcon(shop), title: shop.name })
-          .bindPopup(() => popupContent(shop))
+          .bindPopup(() => popupContent(shop), { maxWidth: 260 })
       ));
     })
     .catch((e) => {

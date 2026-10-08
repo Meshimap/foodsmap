@@ -110,3 +110,285 @@ body {
   color: #fff;
   font-weight: bold;
 }
+
+/* 仮のポップアップ（ステップ8で詳細パネルに置き換える） */
+.shop-popup img {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 6px;
+}
+
+.shop-popup p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+/* ---- 共通の部品 ---- */
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.primary-button {
+  width: 100%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.secondary-button {
+  border: 2px solid var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.secondary-button.small {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.link-button {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.muted {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.error {
+  margin: 0;
+  color: #c92a2a;
+  font-weight: bold;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 2000;
+  max-width: calc(100% - 32px);
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: #212529;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+/* ---- 管理ページ ---- */
+
+body.admin-page {
+  display: block;
+  height: auto;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-header .app-title {
+  margin: 0;
+}
+
+.admin {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left));
+}
+
+.admin-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-view[hidden] {
+  display: none;
+}
+
+.admin h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.admin label,
+.admin .label {
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.admin input[type="text"],
+.admin input[type="password"],
+.admin input[type="search"],
+.admin select,
+.admin textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font: inherit;
+  font-size: 16px; /* 16px 未満だと iPhone で入力時に画面が拡大されてしまう */
+}
+
+.admin .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin .checkbox input {
+  width: 20px;
+  height: 20px;
+}
+
+.counter {
+  margin: -4px 0 0;
+  text-align: right;
+}
+
+.form-map {
+  height: 240px;
+  border-radius: 8px;
+}
+
+#map-hint {
+  margin: -4px 0 4px;
+}
+
+.photo-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.photo-preview {
+  width: 100%;
+}
+
+.photo-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 8px;
+}
+
+.file-button {
+  font-weight: bold;
+}
+
+.shop-list,
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.shop-item.is-hidden {
+  opacity: 0.55;
+}
+
+.shop-item > img,
+.shop-item-icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.shop-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff4e6;
+  font-size: 28px;
+}
+
+.shop-item-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shop-item-comment {
+  overflow: hidden;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.candidate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.candidate:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
