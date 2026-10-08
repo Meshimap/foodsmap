@@ -2,7 +2,7 @@
   'use strict';
 
   const config = window.APP_CONFIG;
-  const { GENRES, GENRE_ICONS, post, photoImg, shopIcon, createMap, areaBounds } = window.Meshi;
+  const { GENRES, GENRE_ICONS, post, photoImg, shopIcon, createMap, areaBounds, toast } = window.Meshi;
 
   const PASSWORD_KEY = 'meshi-admin-password';
   const PHOTO_MAX_SIDE = 1280; // 写真はこの大きさ（長い辺のピクセル数）まで縮小してから送る
@@ -29,15 +29,6 @@
     const el = form.querySelector('.error');
     el.textContent = message || '';
     el.hidden = !message;
-  }
-
-  let toastTimer;
-  function toast(message) {
-    const el = $('.toast');
-    el.textContent = message;
-    el.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.hidden = true; }, 3000);
   }
 
   // ブラウザの保存領域は使えない場合もある（プライベートモードなど）ので、失敗しても止めない

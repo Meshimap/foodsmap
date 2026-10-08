@@ -210,7 +210,18 @@
     return L.latLngBounds(config.AREAS.map((a) => L.latLng(a.lat, a.lng).toBounds(a.radius * 2)));
   }
 
+  // 画面下に短いメッセージを数秒だけ出す（ページに <div class="toast" hidden> が必要）
+  let toastTimer;
+  function toast(message) {
+    const el = document.querySelector('.toast');
+    el.textContent = message;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+  }
+
   window.Meshi = {
+    toast,
     GENRES: Object.keys(GENRE_ICONS),
     GENRE_ICONS,
     fetchData,

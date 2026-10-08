@@ -108,7 +108,7 @@ body {
 
 .venue-label span {
   display: inline-block;
-  transform: translate(-50%, -120%);
+  transform: translate(-50%, -50%); /* 本館の中心にラベルの中心を合わせる */
   padding: 3px 10px;
   border: 2px solid #e03131;
   border-radius: 999px;

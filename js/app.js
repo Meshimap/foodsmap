@@ -2,7 +2,7 @@
   'use strict';
 
   const config = window.APP_CONFIG;
-  const { createMap, areaBounds, shopIcon, clusterIcon, fetchData, photoImg, GENRE_ICONS } = window.Meshi;
+  const { createMap, areaBounds, shopIcon, clusterIcon, fetchData, post, photoImg, toast, GENRE_ICONS } = window.Meshi;
 
   // 両エリアがちょうど収まる範囲で地図を開く
   const bounds = areaBounds();
@@ -45,9 +45,12 @@
         interactive: false,
         style: { color: '#e03131', weight: 3, fillColor: '#e03131', fillOpacity: 0.12 },
       }).addTo(map);
-      // ラベルは建物全体の北側の真ん中あたりに置く（ピンと重なりにくい）
-      const area = buildings.getBounds();
-      L.marker([area.getNorth(), area.getCenter().lng], {
+      // ラベルは本館に重ねる（本館が見つからなければ建物全体の中央）
+      let main = null;
+      buildings.eachLayer((layer) => {
+        if (/本館/.test(layer.feature.properties.name)) main = layer;
+      });
+      L.marker((main || buildings).getBounds().getCenter(), {
         interactive: false,
         keyboard: false,
         icon: L.divIcon({ className: 'venue-label', html: `<span>${config.VENUE_LABEL}</span>`, iconSize: null }),
@@ -68,7 +71,42 @@
 
   // ---- 詳細パネル ----
 
-  const state = { counts: {}, recommended: new Set(), current: null, markers: new Map() };
+  // ---- この端末の情報（ブラウザに保存。使えない環境ではページを開いている間だけ覚える） ----
+
+  const DEVICE_KEY = 'meshi-device-id';
+  const RECOMMENDED_KEY = 'meshi-recommended';
+
+  function load(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+
+  function save(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* 保存できなくても動作は続ける */ }
+  }
+
+  // 端末ごとのランダムな識別子（1端末1店1回の判定に使う。個人を特定する情報は含まない）
+  function deviceId() {
+    let id = load(DEVICE_KEY);
+    if (!id || !/^[A-Za-z0-9-]{16,64}$/.test(id)) {
+      id = window.crypto && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+      save(DEVICE_KEY, id);
+    }
+    return id;
+  }
+
+  function loadRecommended() {
+    try { return new Set(JSON.parse(load(RECOMMENDED_KEY) || '[]')); } catch (e) { return new Set(); }
+  }
+
+  const state = {
+    counts: {},
+    recommended: loadRecommended(), // この端末でおすすめした店の ID
+    pending: new Set(), // 送信中の店の ID
+    current: null,
+    markers: new Map(),
+  };
   const sheet = document.getElementById('sheet');
   const sheetBody = sheet.querySelector('.sheet-body');
 
@@ -125,11 +163,11 @@
       nodes.push(comment);
     }
 
-    // おすすめ（ステップ9で GAS とつなぐ。今は見た目だけ）
     const rec = el('div', 'recommend');
     rec.appendChild(el('p', 'recommend-count', count > 0 ? `${count}人がおすすめ` : 'まだおすすめはありません'));
     const button = el('button', 'recommend-button' + (done ? ' is-done' : ''), done ? 'おすすめ済み ✓' : 'おすすめ！');
     button.type = 'button';
+    button.disabled = state.pending.has(shop.id); // 送信が終わるまで連打できないようにする
     button.setAttribute('aria-pressed', String(done));
     button.addEventListener('click', () => toggleRecommend(shop));
     rec.appendChild(button);
@@ -176,6 +214,7 @@
   function openSheet(shop) {
     select(shop);
     renderSheet(shop);
+    refreshCounts();
     sheet.hidden = false;
     sheetBody.scrollTop = 0;
     // 店のアイコンがパネルに隠れないよう、地図の見える部分の中央あたりに寄せる
@@ -197,13 +236,55 @@
     if (event.key === 'Escape') closeSheet();
   });
 
-  // 仮の動き（ステップ9で GAS に保存する形に置き換える）
-  function toggleRecommend(shop) {
-    const on = !state.recommended.has(shop.id);
+  // ---- おすすめ ----
+
+  function setRecommended(shop, on, count) {
     if (on) state.recommended.add(shop.id); else state.recommended.delete(shop.id);
-    state.counts[shop.id] = Math.max(0, (state.counts[shop.id] || 0) + (on ? 1 : -1));
-    renderSheet(shop);
+    save(RECOMMENDED_KEY, JSON.stringify([...state.recommended]));
+    state.counts[shop.id] = Math.max(0, count);
     refreshMarker(shop);
+    if (state.current === shop) renderSheet(shop);
+  }
+
+  // 押した瞬間に数を増やして（減らして）表示し、裏で GAS に送る。失敗したら元に戻す
+  async function toggleRecommend(shop) {
+    if (state.pending.has(shop.id)) return;
+    const on = !state.recommended.has(shop.id);
+    const before = state.counts[shop.id] || 0;
+    state.pending.add(shop.id);
+    setRecommended(shop, on, before + (on ? 1 : -1));
+    try {
+      const result = await post({ action: 'recommend', shopId: shop.id, deviceId: deviceId(), on });
+      state.pending.delete(shop.id);
+      setRecommended(shop, result.on, result.count); // 他の人の分も含めた最新の数
+      if (on) toast('おすすめしました！');
+    } catch (e) {
+      state.pending.delete(shop.id);
+      setRecommended(shop, !on, before);
+      toast(e.message);
+    }
+  }
+
+  // 詳細パネルを開いたときに、全店のおすすめ数を最新にする（GAS 側でキャッシュしているので軽い）
+  let refreshing = null;
+  function refreshCounts() {
+    if (refreshing) return;
+    refreshing = fetchData()
+      .then(({ counts }) => {
+        // 送信中の店は、送信結果で上書きするのでここでは触らない
+        const changed = new Set([...Object.keys(state.counts), ...Object.keys(counts)]);
+        state.pending.forEach((id) => changed.delete(id));
+        changed.forEach((id) => {
+          const count = counts[id] || 0;
+          if ((state.counts[id] || 0) === count) return;
+          state.counts[id] = count;
+          const marker = state.markers.get(id);
+          if (marker) refreshMarker(marker.shop);
+        });
+        if (state.current && !state.pending.has(state.current.id)) renderSheet(state.current);
+      })
+      .catch((e) => console.warn('おすすめ数を更新できませんでした', e))
+      .finally(() => { refreshing = null; });
   }
 
   // ---- 読み込み ----
@@ -222,6 +303,7 @@
       clusters.addLayers(shops.map((shop) => {
         const marker = L.marker([shop.lat, shop.lng], { icon: shopIcon(shop), title: shop.name, riseOnHover: true })
           .on('click', () => openSheet(shop));
+        marker.shop = shop;
         state.markers.set(shop.id, marker);
         refreshMarker(shop);
         return marker;
