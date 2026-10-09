@@ -22,7 +22,8 @@ window.APP_CONFIG = {
   // true にすると、トップページの右上に地図の切り替えボタンを出す（見比べるとき用）
   BASEMAP_SWITCHER: false,
   // CARTO の API キー（無料・メール登録で発行）。空のあいだは CARTO の地図は選べない
-  CARTO_KEY: 'cb1_4eas_1_38f48ab6dd6dbace26c3766c',
+  // 地図を OpenStreetMap に決めたので、使わないキーは公開しないよう空にした（2026-10-09）
+  CARTO_KEY: '',
   // filter は地図の画像だけにかける色の調整（彩度・明るさを下げてピンを目立たせる）
   BASEMAPS: [
     {

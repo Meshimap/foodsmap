@@ -31,12 +31,13 @@
     el.hidden = !message;
   }
 
+  // ログインした端末では、ログアウトするまでパスワードを覚えておく（タブやブラウザを閉じても残る）。
   // ブラウザの保存領域は使えない場合もある（プライベートモードなど）ので、失敗しても止めない
   function storage(action, value) {
     try {
-      if (action === 'get') return sessionStorage.getItem(PASSWORD_KEY) || '';
-      if (action === 'set') sessionStorage.setItem(PASSWORD_KEY, value);
-      if (action === 'remove') sessionStorage.removeItem(PASSWORD_KEY);
+      if (action === 'get') return localStorage.getItem(PASSWORD_KEY) || '';
+      if (action === 'set') localStorage.setItem(PASSWORD_KEY, value);
+      if (action === 'remove') localStorage.removeItem(PASSWORD_KEY);
     } catch (e) {
       return '';
     }
@@ -96,8 +97,10 @@
     } catch (e) {
       $('#list-summary').textContent = `読み込めませんでした：${e.message}`;
       if (e.fromServer && /パスワード/.test(e.message)) {
-        storage('remove');
+        // 間違いが続いて一時停止しているだけなら、覚えているパスワードは消さない（解除後に開き直せばそのまま入れる）
+        if (!/受け付けを止めています/.test(e.message)) storage('remove');
         show('view-login');
+        showError($('#login-form'), e.message);
       }
     }
   }
